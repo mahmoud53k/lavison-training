@@ -1,0 +1,94 @@
+{% include 'partials/nav.html' %}
+
+<main class="page-shell">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Scan</p>
+      <h1>NFC Attendance</h1>
+    </div>
+  </div>
+
+  <section class="attendance-panel">
+    <p class="muted">Attendance registration closes 30 minutes after the session start time.</p>
+    <div class="attendance-header">
+      <div class="field-box">
+        <span>Course</span>
+        <select
+          id="courseSelect"
+          onchange="window.location='{{ url_for('attendance') }}?course_id=' + this.value"
+        >
+          <option value="">Choose course</option>
+          {% for course in courses %}
+          <option value="{{ course.id }}">{{ course.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field-box">
+        <span>Session</span>
+        <select id="sessionSelect" name="session_id" form="attendanceForm">
+          <option value="">Choose session</option>
+          {% for session in sessions %}
+          <option value="{{ session.id }}">
+            {{ session.session_date }} • {{ session.start_time }} - {{
+            session.end_time }} • {{ session.status }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="attendance-status">
+      <span class="label">Status:</span>
+      <span class="badge success">SESSION OPEN</span>
+    </div>
+
+    <form id="attendanceForm" method="post" class="attendance-form">
+      <input type="hidden" name="course_id" id="courseIdInput" value="" />
+      <div class="input-row">
+        <input
+          id="hidReaderInput"
+          name="nfc_uid"
+          type="text"
+          placeholder="Waiting for NFC card..."
+          autocomplete="off"
+        />
+        <button type="submit" class="btn btn-primary">Record Attendance</button>
+      </div>
+      <div class="dev-actions">
+        <input
+          id="simulatedUid"
+          type="text"
+          placeholder="Test UID e.g. 04A1B2C3D4"
+        />
+        <button type="button" id="simulateScan" class="btn btn-secondary">
+          Simulate Scan
+        </button>
+      </div>
+    </form>
+
+    {% if result %}
+    <div class="result-box success">
+      <strong>Attendance Recorded</strong>
+      <p>Student: <span>{{ result.student }}</span></p>
+      <p>Course: <span>{{ result.course }}</span></p>
+      <p>Time: <span>{{ result.time }}</span></p>
+      <p>NFC: <span>{{ result.uid }}</span></p>
+    </div>
+    {% endif %} {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-list">
+      {% for category, message in messages %}
+      <div
+        class="flash {% if category == 'error' %}error{% elif category == 'warning' %}warning{% else %}success{% endif %}"
+      >
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+  </section>
+</main>
+
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+{% include 'partials/footer.html' %}

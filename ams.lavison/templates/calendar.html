@@ -1,0 +1,9 @@
+{% include 'partials/nav.html' %}
+<main class="page-shell">
+  <div class="page-header"><div><p class="eyebrow">Schedule</p><h1>Course Calendar</h1></div><div><a class="btn btn-secondary" href="{{ url_for('calendar',month=prev_month) }}">Previous</a> <strong>{{ month_label }}</strong> <a class="btn btn-secondary" href="{{ url_for('calendar',month=next_month) }}">Next</a></div></div>
+  <section class="panel"><div class="calendar-grid"><div class="calendar-day-name">Mon</div><div class="calendar-day-name">Tue</div><div class="calendar-day-name">Wed</div><div class="calendar-day-name">Thu</div><div class="calendar-day-name">Fri</div><div class="calendar-day-name">Sat</div><div class="calendar-day-name">Sun</div>
+    {% for week in weeks %}{% for cell in week %}<div class="calendar-cell{% if cell and selected_date==cell.date %} selected{% endif %}">{% if cell %}<a class="calendar-day" href="{{ url_for('calendar',month=month,date=cell.date) }}">{{ cell.day }}</a>{% for s in cell.sessions %}<a class="calendar-event" href="{{ url_for('calendar',month=month,date=s.session_date) }}">{{ s.start_time|display_time }} · {{ s.course_name }}</a>{% endfor %}{% endif %}</div>{% endfor %}{% endfor %}
+  </div>
+  </section>
+  {% if selected_date %}<section class="panel"><div class="panel-header"><h2>Sessions on {{ selected_date }}</h2>{% if current_role=='admin' %}<a class="btn btn-primary small" href="{{ url_for('sessions',session_date=selected_date) }}">Add course session</a>{% endif %}</div><table><thead><tr><th>Time</th><th>Course</th><th>Status</th></tr></thead><tbody>{% for s in selected_sessions %}<tr><td>{{ s.start_time|display_time }} – {{ s.end_time|display_time }}</td><td>{{ s.course_name }}</td><td>{{ s.status }}</td></tr>{% else %}<tr><td colspan="3" class="empty-state">No sessions for this date.</td></tr>{% endfor %}</tbody></table></section>{% endif %}
+</main>{% include 'partials/footer.html' %}

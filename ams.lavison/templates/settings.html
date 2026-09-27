@@ -1,0 +1,56 @@
+{% include 'partials/nav.html' %}
+
+<main class="page-shell">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">System</p>
+      <h1>Settings</h1>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Prototype Setup</h2>
+    </div>
+    <div class="detail-list">
+      <p><strong>Reader mode:</strong> Keyboard / HID</p>
+      <p><strong>Local URL:</strong> {{ local_url }}</p>
+      <p>
+        <strong>Test mode:</strong> Simulate NFC scan from the attendance
+        screen.
+      </p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Authorized Login Emails</h2>
+    </div>
+    <form method="post" class="search-form settings-email-form">
+      <input type="hidden" name="action" value="add" />
+      <input
+        name="email"
+        type="email"
+        placeholder="person@example.com"
+        required
+      />
+      <button type="submit" class="btn btn-primary">Add email</button>
+    </form>
+
+    <div class="settings-email-list">
+      {% for item in allowed_emails %}
+      <div class="settings-email-row">
+        <span>{{ item.email }}</span>
+        <form method="post">
+          <input type="hidden" name="action" value="remove" />
+          <input type="hidden" name="email_id" value="{{ item.id }}" />
+          <button type="submit" class="btn btn-danger small">Remove</button>
+        </form>
+      </div>
+      {% else %}
+      <p class="empty-state">No authorized emails yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% include 'partials/footer.html' %}

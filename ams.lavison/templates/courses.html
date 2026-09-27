@@ -1,0 +1,79 @@
+{% include 'partials/nav.html' %}
+
+<main class="page-shell">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Catalog</p>
+      <h1>Courses</h1>
+    </div>
+    <form class="search-form" method="get">
+      <input
+        type="text"
+        name="q"
+        value="{{ search }}"
+        placeholder="Search course..."
+      />
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+  </div>
+
+  <div class="split-grid two-col">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Add / Edit Course</h2>
+      </div>
+      <form method="post" class="form-grid">
+        <input type="hidden" name="course_id" value="" />
+        <div class="form-group full">
+          <label>Course Name</label>
+          <input type="text" name="name" required />
+        </div>
+        <div class="form-group full">
+          <label>Course Code</label>
+          <input type="text" name="code" required />
+        </div>
+        <div class="form-group full">
+          <label>Description</label>
+          <textarea name="description" rows="4"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Course</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Course List</h2>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for course in courses %}
+          <tr>
+            <td>{{ course.name }}</td>
+            <td>{{ course.code }}</td>
+            <td class="table-actions">
+              <a href="{{ url_for('course_materials',course_id=course.id) }}" class="btn btn-secondary small">Materials</a>
+              <form method="post" class="inline-form" onsubmit="return confirm('Delete this course from active courses? If it has history, that history will be preserved.');">
+                <input type="hidden" name="action" value="delete" />
+                <input type="hidden" name="course_id" value="{{ course.id }}" />
+                <button type="submit" class="btn btn-danger small">Delete course</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="3" class="empty-state">No active courses found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+</main>
+{% include 'partials/footer.html' %}

@@ -1,0 +1,37 @@
+{% include 'partials/nav.html' %}
+<main class="page-shell"><div class="page-header"><div><p class="eyebrow">{{ course.name }}</p><h1>Course Materials</h1></div></div>
+{% if current_role in ['teacher','admin'] %}<section class="panel"><div class="panel-header"><h2>Add PDF or video</h2></div><form id="material-upload-form" data-start-url="{{ url_for('start_material_upload',course_id=course_id) }}" method="post" enctype="multipart/form-data" class="form-grid"><div class="form-group"><label>Title</label><input name="title" required></div><div class="form-group"><label>File (PDF, MP4, WebM, MOV)</label><input type="file" name="file" accept=".pdf,.mp4,.webm,.mov" required></div><button id="material-upload-submit" type="submit" class="btn btn-primary">Upload material</button><p id="material-upload-status" class="muted full" role="status" aria-live="polite"></p></form></section>{% endif %}
+<section class="panel"><div class="panel-header"><h2>Materials</h2></div><table><thead><tr><th>Title</th><th>Type</th><th>Action</th></tr></thead><tbody>{% for m in materials %}<tr><td>{{ m.title }}</td><td>{{ m.kind|upper }}</td><td>{% if m.kind=='pdf' %}<a href="{{ url_for('download_material',material_id=m.id) }}" class="btn btn-secondary small">Download</a>{% elif current_role != 'student' or m.view_count < 2 %}<a href="{{ url_for('view_video',material_id=m.id) }}" class="btn btn-secondary small">View video{% if current_role=='student' %} ({{ 2-m.view_count }} left){% endif %}</a>{% else %}View limit reached{% endif %}{% if current_role in ['teacher','admin'] %}<form method="post" class="inline-form" onsubmit="return confirm('Delete this material permanently?')"><input type="hidden" name="action" value="delete_material"><input type="hidden" name="material_id" value="{{ m.id }}"><button type="submit" class="btn btn-danger small">Delete</button></form>{% endif %}</td></tr>{% else %}<tr><td colspan="3" class="empty-state">No materials available.</td></tr>{% endfor %}</tbody></table></section></main>
+{% include 'partials/footer.html' %}
+{% if current_role in ['teacher','admin'] %}<script>
+  const materialForm = document.getElementById('material-upload-form');
+  materialForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const file = materialForm.elements.file.files[0];
+    const title = materialForm.elements.title.value.trim();
+    const status = document.getElementById('material-upload-status');
+    const button = document.getElementById('material-upload-submit');
+    if (!file || !title) return;
+    const managerUrl = {{ url_for('material_upload_manager', course_id=course_id)|tojson }};
+    const uploadWindow = window.open(managerUrl, 'ams-material-upload', 'width=560,height=520');
+    if (!uploadWindow) {
+      status.textContent = 'Allow pop-ups for this site to start a background upload.';
+      return;
+    }
+    button.disabled = true;
+    status.textContent = 'Opening upload window… You can continue using this page.';
+    const handleReady = (message) => {
+      if (message.origin !== window.location.origin || message.source !== uploadWindow || message.data?.type !== 'upload-window-ready') return;
+      window.removeEventListener('message', handleReady);
+      uploadWindow.postMessage({type:'start-upload', title, file}, window.location.origin);
+    };
+    window.addEventListener('message', handleReady);
+  });
+  window.addEventListener('message', (message) => {
+    if (message.origin !== window.location.origin || message.data?.type !== 'material-upload-complete') return;
+    const status = document.getElementById('material-upload-status');
+    status.textContent = 'Upload complete.';
+    document.getElementById('material-upload-submit').disabled = false;
+    if (window.location.pathname === `/courses/${message.data.courseId}/materials`) window.location.reload();
+  });
+</script>{% endif %}

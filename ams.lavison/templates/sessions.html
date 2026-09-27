@@ -1,0 +1,164 @@
+{% include 'partials/nav.html' %}
+
+<main class="page-shell">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Schedule</p>
+      <h1>Sessions</h1>
+    </div>
+  </div>
+
+  <div class="split-grid two-col">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>{{ 'Edit Session' if edit_session else 'Create Session' }}</h2>
+      </div>
+      <form method="post" class="form-grid">
+        <input
+          type="hidden"
+          name="session_id"
+          value="{{ edit_session.id if edit_session else '' }}"
+        />
+        <div class="form-group full">
+          <label>Course</label>
+          <select name="course_id" required>
+            <option value="">Select course...</option>
+            {% for course in courses %}
+            <option value="{{ course.id }}" {{ 'selected' if edit_session and edit_session.course_id == course.id else '' }}>
+              {{ course.name }} ({{ course.code }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>From date</label>
+          <input
+            type="date"
+            name="date_from"
+            value="{{ edit_session.session_date if edit_session else new_session_date }}"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>To date</label>
+          <input
+            type="date"
+            name="date_to"
+            value="{{ edit_session.session_date if edit_session else new_session_date }}"
+            required
+          />
+        </div>
+        <p class="muted" style="grid-column: 1 / -1">Creates one session each day in the date range, using the same start and end times.</p>
+        <div class="form-group">
+          <label>Start Time</label>
+          <input type="hidden" name="start_time" id="start_time" value="{{ edit_session.start_time|display_time if edit_session else '' }}" />
+          <div class="time-select-group" data-time-prefix="start">
+            <select id="start_hour" aria-label="Start hour" required><option value="">Hour</option>{% for hour in range(1,13) %}<option value="{{ '%02d'|format(hour) }}">{{ hour }}</option>{% endfor %}</select>
+            <span>:</span>
+            <select id="start_minute" aria-label="Start minute" required><option value="">Minute</option>{% for minute in range(60) %}<option value="{{ '%02d'|format(minute) }}">{{ '%02d'|format(minute) }}</option>{% endfor %}</select>
+            <select id="start_period" aria-label="Start AM or PM" required><option value="">AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>End Time</label>
+          <input type="hidden" name="end_time" id="end_time" value="{{ edit_session.end_time|display_time if edit_session else '' }}" />
+          <div class="time-select-group" data-time-prefix="end">
+            <select id="end_hour" aria-label="End hour" required><option value="">Hour</option>{% for hour in range(1,13) %}<option value="{{ '%02d'|format(hour) }}">{{ hour }}</option>{% endfor %}</select>
+            <span>:</span>
+            <select id="end_minute" aria-label="End minute" required><option value="">Minute</option>{% for minute in range(60) %}<option value="{{ '%02d'|format(minute) }}">{{ '%02d'|format(minute) }}</option>{% endfor %}</select>
+            <select id="end_period" aria-label="End AM or PM" required><option value="">AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          {{ 'Save Changes' if edit_session else 'Create Session' }}
+        </button>
+        {% if edit_session %}
+        <a href="{{ url_for('sessions') }}" class="btn btn-secondary">Cancel</a>
+        {% endif %}
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Session List</h2>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Course</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for session in sessions %}
+          <tr>
+            <td>{{ session.course_name }}</td>
+            <td>{{ session.session_date }}</td>
+            <td>
+              {{ session.start_time|display_time }} - {{
+              session.end_time|display_time }}
+            </td>
+            <td>
+              <span
+                class="badge {% if session.status == 'open' %}success{% else %}warning{% endif %}"
+                >{{ session.status }}</span
+              >
+            </td>
+            <td>
+              <a
+                href="{{ url_for('sessions', edit_id=session.id) }}"
+                class="btn btn-secondary small"
+              >
+                Edit
+              </a>
+              <form method="post" class="inline-form" onsubmit="return confirm('Delete this session and all attendance records recorded for it? This cannot be undone.');">
+                <input type="hidden" name="action" value="delete" />
+                <input type="hidden" name="session_id" value="{{ session.id }}" />
+                <button type="submit" class="btn btn-danger small">Delete</button>
+              </form>
+              <form method="post" class="inline-form">
+                <input type="hidden" name="action" value="toggle" />
+                <input
+                  type="hidden"
+                  name="session_id"
+                  value="{{ session.id }}"
+                />
+                <button type="submit" class="btn btn-secondary small">
+                  {{ 'Close' if session.status == 'open' else 'Open' }}
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="empty-state">No sessions created yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+</main>
+<script>
+  function setTimeHidden(prefix) {
+    const hour = document.getElementById(prefix + '_hour').value;
+    const minute = document.getElementById(prefix + '_minute').value;
+    const period = document.getElementById(prefix + '_period').value;
+    document.getElementById(prefix + '_time').value = hour && minute && period ? `${hour}:${minute} ${period}` : '';
+  }
+  ['start', 'end'].forEach(prefix => {
+    const hidden = document.getElementById(prefix + '_time');
+    const initial = hidden.value.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (initial) {
+      document.getElementById(prefix + '_hour').value = initial[1].padStart(2, '0');
+      document.getElementById(prefix + '_minute').value = initial[2];
+      document.getElementById(prefix + '_period').value = initial[3].toUpperCase();
+    }
+    ['hour', 'minute', 'period'].forEach(part => document.getElementById(`${prefix}_${part}`).addEventListener('change', () => setTimeHidden(prefix)));
+  });
+</script>
+{% include 'partials/footer.html' %}

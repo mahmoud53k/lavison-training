@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AMS Lavison</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}?v=20260925-logo"
+    />
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='img/ams-logo.jpg') }}" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <img class="brand-logo" src="{{ url_for('static', filename='img/ams-logo.jpg') }}" alt="Lavison logo" />
+        </div>
+
+        <nav class="sidebar-nav">
+          {% if current_role == 'student' %}
+          <a href="{{ url_for('student_home') }}" class="nav-link">My Attendance</a>
+          <a href="{{ url_for('calendar') }}" class="nav-link">Course Calendar</a>
+          {% elif current_role == 'teacher' %}
+          <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+          <a href="{{ url_for('calendar') }}" class="nav-link">Course Calendar</a>
+          <a href="{{ url_for('teacher_courses') }}" class="nav-link">My Courses</a>
+          <a href="{{ url_for('reports') }}" class="nav-link">Reports</a>
+          {% else %}
+          <a
+            href="{{ url_for('dashboard') }}"
+            class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"
+            >Dashboard</a
+          >
+          <a
+            href="{{ url_for('attendance') }}"
+            class="nav-link {% if request.endpoint == 'attendance' %}active{% endif %}"
+            >Attendance</a
+          >
+          
+          <a
+            href="{{ url_for('students') }}"
+            class="nav-link {% if request.endpoint in ['students', 'student_details', 'enroll_student'] %}active{% endif %}"
+            >Students</a
+          >
+          <a
+            href="{{ url_for('courses') }}"
+            class="nav-link {% if request.endpoint == 'courses' %}active{% endif %}"
+            >Courses</a
+          >
+          <a
+            href="{{ url_for('sessions') }}"
+            class="nav-link {% if request.endpoint == 'sessions' %}active{% endif %}"
+            >Sessions</a
+          >
+          <a href="{{ url_for('calendar') }}" class="nav-link">Calendar</a>
+          <a href="{{ url_for('reports') }}" class="nav-link">Reports</a>
+          {% if current_role == 'admin' %}<a href="{{ url_for('accounts') }}" class="nav-link">Accounts</a>{% endif %}
+          <a
+            href="{{ url_for('settings') }}"
+            class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}"
+            >Settings</a
+          >
+          {% endif %}
+        </nav>
+
+        <div class="sidebar-foot">
+          <a href="{{ url_for('logout') }}" class="btn btn-secondary small"
+            >Logout</a
+          >
+        </div>
+      </aside>
+
+      <div class="content-area">
+        <header class="topbar">
+          <span class="topbar-context">AMS Lavison</span>
+          <div class="topbar-actions">
+            <span class="topbar-term">Local attendance system</span>
+            <span class="topbar-user">{{ current_role|title }} · {{ current_email }}</span>
+          </div>
+        </header>
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %}
+        <div class="flash-list page-flash">
+          {% for category, message in messages %}
+          <div
+            class="flash {% if category == 'error' %}error{% elif category == 'warning' %}warning{% else %}success{% endif %}"
+          >
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %} {% endwith %}
+        <!--
+          content-area and layout are intentionally left open here.
+          Every page that includes this partial must include
+          'partials/footer.html' at the end of its own content to close
+          them. See partials/footer.html.
+        -->

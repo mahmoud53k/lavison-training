@@ -1,0 +1,125 @@
+{% include 'partials/nav.html' %}
+
+<main class="page-shell">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">People</p>
+      <h1>Students</h1>
+    </div>
+    <form class="search-form" method="get">
+      <input
+        type="text"
+        name="q"
+        value="{{ search }}"
+        placeholder="Search student..."
+      />
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+  </div>
+
+  <div class="split-grid two-col">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Add / Edit Student</h2>
+      </div>
+
+      <form method="post" class="form-grid">
+        <input type="hidden" name="student_id" value="" />
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" name="full_name" required />
+        </div>
+        <div class="form-group">
+          <label>Student Code</label>
+          <input type="text" name="student_code" required />
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" name="phone" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" />
+        </div>
+        <div class="form-group">
+          <label>Grade</label>
+          <input type="text" name="grade" />
+        </div>
+        <div class="form-group">
+          <label>NFC UID</label>
+          <input
+            type="text"
+            id="manualUid"
+            name="nfc_uid"
+            placeholder="04A1B2C3D4"
+          />
+        </div>
+
+        <div class="inline-actions">
+          <button type="button" class="btn btn-secondary" id="scanNfcBtn">
+            Scan NFC
+          </button>
+          <button type="button" class="btn btn-secondary" id="focusReaderBtn">
+            Enter UID manually
+          </button>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Student</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Student List</h2>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>NFC</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr>
+            <td>{{ student.full_name }}</td>
+            <td>{{ student.student_code }}</td>
+            <td>{{ student.nfc_uid or 'Not assigned' }}</td>
+            <td class="table-actions">
+              <a
+                href="{{ url_for('student_details', student_id=student.id) }}"
+                class="btn btn-secondary small"
+                >View</a
+              >
+              <form
+                method="post"
+                class="inline-form"
+                onsubmit="return confirm('Deactivate this student?');"
+              >
+                <input type="hidden" name="action" value="delete" />
+                <input
+                  type="hidden"
+                  name="student_id"
+                  value="{{ student.id }}"
+                />
+                <button type="submit" class="btn btn-danger small">
+                  Deactivate
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="empty-state">No active students found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+{% include 'partials/footer.html' %}

@@ -1,0 +1,15 @@
+{% include 'partials/nav.html' %}
+<main class="page-shell">
+  <div class="page-header">
+    <div><p class="eyebrow">{{ material.title }}</p><h1>Course video</h1></div>
+  </div>
+  <section class="panel">
+    <video controls playsinline preload="metadata" style="display:block;width:100%;max-height:75vh;background:#111;border-radius:10px">
+      <source src="{{ url_for('stream_video', material_id=material.id) }}" type="{{ video_mime }}">
+      Your browser does not support video playback.
+    </video>
+    <p class="muted">Playback is limited to two views for student accounts.</p>
+    <a class="btn btn-secondary" href="{{ url_for('course_materials', course_id=material.course_id) }}">Back to course materials</a>
+  </section>
+</main>
+{% include 'partials/footer.html' %}

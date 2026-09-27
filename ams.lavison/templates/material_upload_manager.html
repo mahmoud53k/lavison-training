@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Uploading material · AMS Lavison</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body { padding: 24px; }
+    .upload-window { max-width: 620px; margin: 24px auto; }
+    progress { width: 100%; height: 18px; margin: 16px 0; accent-color: var(--primary); }
+  </style>
+</head>
+<body>
+  <main class="panel upload-window">
+    <p class="eyebrow">{{ course.name }}</p>
+    <h1>Uploading material</h1>
+    <p id="upload-file-name" class="muted">Preparing upload…</p>
+    <progress id="upload-progress" value="0" max="100"></progress>
+    <p id="upload-status" role="status" aria-live="polite">You can leave the course page open in another tab while this upload continues.</p>
+    <button id="upload-close" class="btn btn-secondary" type="button" hidden>Close window</button>
+  </main>
+  <script>
+    const courseId = {{ course.id|tojson }};
+    const startUrl = {{ url_for('start_material_upload', course_id=course.id)|tojson }};
+    const statusText = document.getElementById('upload-status');
+    const progressBar = document.getElementById('upload-progress');
+    const closeButton = document.getElementById('upload-close');
+    let started = false;
+
+    closeButton.addEventListener('click', () => window.close());
+    window.addEventListener('message', async (event) => {
+      if (event.origin !== window.location.origin || event.source !== window.opener || event.data?.type !== 'start-upload' || started) return;
+      started = true;
+      const {file, title} = event.data;
+      document.getElementById('upload-file-name').textContent = file.name;
+      try {
+        statusText.textContent = 'Preparing upload…';
+        const startResponse = await fetch(startUrl, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({title, filename:file.name, size:file.size})
+        });
+        const upload = await startResponse.json();
+        if (!startResponse.ok) throw new Error(upload.error || 'Could not start upload.');
+        let index = 0;
+        for (let offset = 0; offset < file.size; offset += upload.chunk_size) {
+          const chunk = file.slice(offset, offset + upload.chunk_size);
+          const response = await fetch(`/materials/upload/${upload.upload_id}/chunk/${index}`, {
+            method:'POST', headers:{'Content-Type':'application/octet-stream'}, body:chunk
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Upload failed.');
+          index++;
+          progressBar.value = Math.min(100, result.uploaded / result.size * 100);
+          statusText.textContent = `Uploading… ${(result.uploaded / 1048576).toFixed(1)} MB of ${(result.size / 1048576).toFixed(1)} MB (${Math.round(progressBar.value)}%)`;
+        }
+        statusText.textContent = 'Saving material…';
+        const finish = await fetch(`/materials/upload/${upload.upload_id}/complete`, {method:'POST'});
+        const result = await finish.json();
+        if (!finish.ok) throw new Error(result.error || 'Could not finish upload.');
+        progressBar.value = 100;
+        statusText.textContent = 'Upload complete. You can close this window.';
+        closeButton.hidden = false;
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({type:'material-upload-complete', courseId}, window.location.origin);
+        }
+      } catch (error) {
+        statusText.textContent = error.message || 'Upload failed. Please try again.';
+        closeButton.hidden = false;
+      }
+    });
+    if (window.opener) window.opener.postMessage({type:'upload-window-ready'}, window.location.origin);
+  </script>
+</body>
+</html>

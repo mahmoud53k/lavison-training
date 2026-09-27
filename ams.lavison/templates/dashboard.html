@@ -1,0 +1,123 @@
+{% include 'partials/nav.html' %}
+
+<main class="page-shell">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Overview</p>
+      <h1>Dashboard</h1>
+    </div>
+    <div class="network-box">
+      <span>Local Server</span>
+      <strong>{{ local_url }}</strong>
+    </div>
+  </div>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <span>Total Students</span>
+      <strong>{{ stats.total_students }}</strong>
+    </div>
+    <div class="stat-card">
+      <span>Total Courses</span>
+      <strong>{{ stats.total_courses }}</strong>
+    </div>
+    <div class="stat-card">
+      <span>Today's Sessions</span>
+      <strong>{{ stats.todays_sessions }}</strong>
+    </div>
+    <div class="stat-card">
+      <span>Today's Attendance</span>
+      <strong>{{ stats.todays_attendance }}</strong>
+    </div>
+    <div class="stat-card success">
+      <span>Present</span>
+      <strong>{{ stats.present }}</strong>
+    </div>
+    <div class="stat-card warning">
+      <span>Absent</span>
+      <strong>{{ stats.absent }}</strong>
+    </div>
+  </section>
+
+  {% if alerts %}<section class="panel alert-panel"><div class="panel-header"><h2>Attendance follow-up needed</h2></div><table><thead><tr><th>Student</th><th>Course</th><th>Missed sessions</th><th>Contact</th></tr></thead><tbody>{% for a in alerts %}<tr><td>{{ a.full_name }}</td><td>{{ a.name }}</td><td>{{ a.missed }}</td><td>{% if a.phone %}<a class="btn btn-primary small" href="tel:{{ a.phone }}">Call {{ a.phone }}</a>{% else %}No phone on file{% endif %}</td></tr>{% endfor %}</tbody></table></section><script>window.addEventListener('DOMContentLoaded',()=>alert('Attendance alert: one or more students have missed at least four sessions. See the follow-up list.'));</script>{% endif %}
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Today's Courses & Attendance</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Course</th>
+          <th>Session Time</th>
+          <th>Students</th>
+          <th>Present</th>
+          <th>Absent</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in today_sessions %}
+        <tr>
+          <td>{{ item.course_name }}</td>
+          <td>{{ item.start_time }} - {{ item.end_time }}</td>
+          <td>{{ item.enrolled_count }}</td>
+          <td>{{ item.present_count }}</td>
+          <td>{{ item.absent_count if item.ended else 'Pending' }}</td>
+          <td>
+            <span
+              class="badge {% if item.ended %}warning{% else %}success{% endif %}"
+            >
+              {{ 'Ended' if item.ended else 'In progress / upcoming' }}
+            </span>
+          </td>
+        </tr>
+        {% if item.ended and item.absentees %}
+        <tr>
+          <td colspan="6">
+            <strong>Absent students:</strong>
+            {% for student in item.absentees %}{{ student.full_name }}{% if not
+            loop.last %}, {% endif %}{% endfor %}
+          </td>
+        </tr>
+        {% endif %} {% else %}
+        <tr>
+          <td colspan="6" class="empty-state">No courses scheduled today.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Recent Attendance</h2>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Course</th>
+          <th>Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in recent %}
+        <tr>
+          <td>{{ row.student }}</td>
+          <td>{{ row.course }}</td>
+          <td>{{ row.check_in_time }}</td>
+          <td><span class="badge success">{{ row.status }}</span></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4" class="empty-state">No attendance recorded yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+{% include 'partials/footer.html' %}

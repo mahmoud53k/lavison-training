@@ -1,0 +1,92 @@
+{% include 'partials/nav.html' %}
+
+<main class="page-shell">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Reports</p>
+      <h1>Attendance Reports</h1>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Filters</h2>
+    </div>
+    <form method="get" class="filter-grid">
+      <select name="student_id">
+        <option value="">Student</option>
+        {% for student in students %}
+        <option value="{{ student.id }}" {% if filters.student_id==student.id|string %}selected{% endif %}>
+          {{ student.full_name }}
+        </option>
+        {% endfor %}
+      </select>
+      <select name="course_id">
+        <option value="">Course</option>
+        {% for course in courses %}
+        <option value="{{ course.id }}" {% if filters.course_id==course.id|string %}selected{% endif %}>
+          {{ course.name }}
+        </option>
+        {% endfor %}
+      </select>
+      <input type="date" name="date" value="{{ filters.date or '' }}" />
+      <select name="session_id">
+        <option value="">Session</option>
+        {% for session in sessions %}
+        <option value="{{ session.id }}" {% if filters.session_id==session.id|string %}selected{% endif %}>
+          {{ session.session_date }} • {{ session.id }}
+        </option>
+        {% endfor %}
+      </select>
+      <select name="status">
+        <option value="">Status</option>
+        <option value="Present" {% if filters.status=='Present' %}selected{% endif %}>Present</option>
+        <option value="Late" {% if filters.status=='Late' %}selected{% endif %}>Late</option>
+        <option value="Absent" {% if filters.status=='Absent' %}selected{% endif %}>Absent</option>
+      </select>
+      <button type="submit" class="btn btn-primary">Apply</button>
+    </form>
+  </section>
+
+  {% if current_role in ['admin','teacher'] %}<section class="panel"><div class="panel-header"><h2>Export course attendance</h2></div><form class="filter-grid" method="get" action="{{ url_for('export_attendance') }}"><select name="course_id" required><option value="">Course</option>{% for course in courses %}<option value="{{ course.id }}">{{ course.name }}</option>{% endfor %}</select><select name="period" id="exportPeriod"><option value="daily">Daily</option><option value="monthly">Monthly</option></select><input type="date" name="date" id="exportDate" required><input type="month" name="month" id="exportMonth" style="display:none"><button class="btn btn-primary">Download CSV</button></form><script>document.getElementById('exportPeriod').addEventListener('change',e=>{document.getElementById('exportDate').style.display=e.target.value==='daily'?'':'none';document.getElementById('exportDate').required=e.target.value==='daily';document.getElementById('exportMonth').style.display=e.target.value==='monthly'?'':'none';document.getElementById('exportMonth').required=e.target.value==='monthly';});</script></section>{% endif %}
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Attendance Summary</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Course</th>
+          <th>Date</th>
+          <th>Check-in</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.student }}</td>
+          <td>{{ row.course }}</td>
+          <td>{{ row.date }}</td>
+          <td>{{ row.check_in_time }}</td>
+          <td>
+            <span
+              class="badge {% if row.status == 'Present' %}success{% elif row.status == 'Late' %}warning{% else %}error{% endif %}"
+              >{{ row.status }}</span
+            >
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="empty-state">
+            No reports found for the selected filters.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+{% include 'partials/footer.html' %}
